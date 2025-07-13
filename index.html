@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Leaderboard & Records</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      background: #f7f8fa;
+    }
+    .container {
+      max-width: 900px;
+      margin: 3rem auto 3rem 3rem;
+      background: #fff;
+      border-radius: 12px;
+      padding: 2rem 2.5rem;
+      box-shadow: 0 6px 32px #0001;
+    }
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      letter-spacing: 1px;
+    }
+    .section-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin: 2.4rem 0 1rem 0;
+      color: #206fc7;
+      border-bottom: 2px solid #e6eaf0;
+      padding-bottom: 2px;
+      letter-spacing: 1px;
+    }
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: #fafbfc;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    thead tr {
+      background: #e6eaf0;
+    }
+    th, td {
+      padding: 0.7rem 1.2rem;
+      text-align: left;
+      font-size: 1rem;
+      border-bottom: 1.5px solid #d1d6dd;
+    }
+    th {
+      font-weight: 600;
+      color: #3a4259;
+    }
+    tbody tr:nth-child(even) {
+      background: #f3f6fa;
+    }
+    .sidebar {
+      position: fixed;
+      top: 3rem;
+      right: 2rem;
+      width: 320px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px #0002;
+      padding: 1.5rem 1.5rem 1rem 1.5rem;
+      opacity: 0.85;
+      z-index: 10;
+      transition: opacity 0.2s;
+    }
+    .sidebar:hover,
+    .sidebar:focus-within {
+      opacity: 1;
+    }
+    .sidebar h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #444;
+      margin-bottom: 10px;
+    }
+    .sidebar form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .sidebar input[type="text"],
+    .sidebar input[type="number"] {
+      border: 1px solid #d3dae6;
+      border-radius: 5px;
+      padding: 0.4rem 0.7rem;
+      font-size: 1rem;
+      outline: none;
+      background: #fafbfc;
+    }
+    .sidebar input[type="file"] {
+      font-size: 0.95rem;
+      margin-bottom: 5px;
+    }
+    .sidebar button {
+      background: #206fc7;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 0.5rem 0;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .sidebar button:hover {
+      background: #1457a6;
+    }
+    .msg {
+      background: #c8f7c5;
+      color: #267a32;
+      padding: 0.5rem;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 0.98rem;
+    }
+    @media (max-width: 1100px) {
+      .sidebar {
+        position: static;
+        width: auto;
+        margin: 2rem 0 0 0;
+      }
+      .container {
+        margin: 2rem;
+        padding: 1.2rem;
+      }
+    }
+    @media (max-width: 700px) {
+      .container {
+        margin: 1rem;
+        padding: 0.6rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Leaderboard & Records</h1>
+    <div id="sections"></div>
+  </div>
+
+  <!-- Sidebar form -->
+  <div class="sidebar" tabindex="0">
+    <h2>Submit Record</h2>
+    <div class="msg" id="msg" style="display:none;"></div>
+    <form id="recordForm">
+      <input type="text" name="name" placeholder="Record name" required />
+      <input type="text" name="user" placeholder="Your name" required />
+      <input type="number" name="value" step="any" placeholder="Value" required />
+      <input type="text" name="unit" placeholder="What else..." required />
+      <input type="file" name="image" accept="image/*" required />
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+
+  <script>
+    // Set your backend API URL here
+    const API = "https://zcsheet.onrender.com"; // Change to your backend's public URL on deploy
+
+    // Section map: Fill this out with your actual section data
+    // EXAMPLE:
+    const sectionMap = {
+      "GENERAL": ["Zenith Explorer+", "Clicker Speedrun", "Typer Speedrun", "Supercharged+", "Multitasker", "Effective", "Zenith Speedrun", "Zenith Speedrun+", "Zenith Speedrunner", "Divine Speedrunner", "Zenith Challenger", "Divine Challenger", "The Spike of All Time-", "The Spike of All Time", "The Spike of All Time+"],
+      "MOD": ["The Emperor", "Temperence", "Wheel of Fortune", "The Tower", "Strength", "The Devil", "The Hermit", "The Magician", "The Lovers", "Grandmaster", "Starving Artist", "Trained Professionals", "Modern Classic", "Deadlocked", "Emperor's Decadence", "Divine Mastery", "Con Artist", "Swamp Water Lite", "Swamp Water"],
+      "REVMOD": ["The Tyrant", "Asceticism", "Loaded Dice", "Freefall", "Last Stand", "Damnation", "The Exile", "The Warlock", "Bleeding Hearts", "Demonic Speed", "Whizzing Wizard", "The Grandmaster+", "Pristine", "Storage Overload", "Sweatshop", "Fleeting Memory", "Bnuuy", "Grand-Master! Rounds", "Sweat and Ruin", "Cupid's Gamble", "Despairful Longing", "Authoritarian Delusion", "Tyranical Dyarchy", "Sisyphean Monarchy", "Kitsune Trickery", "Ambrosia Soda", "Ambrosia Wine"],
+      "WHY": ["Blight", "Desolation", "Havoc", "Pandemonium", "Inferno", "Purgatory", "Perdition", "Cataclysm", "Annihilation", "Armagedon", "Abyss"],
+      "SUPERCHARGED CLONE": [],
+      "SPECIAL": ["Escape Artist", "Talentless", "Block Rationing", "The Responsible One", "Guardian Angel", "Lover's Promise", "Clutch Main", "The Oblivious Artist", "Powerless", "The Pacifist", "Divine Rejection", "Sunk Cost", "Wax Wings", "Carried", "Empurple", "Patience is a Virtue", "Spotless", "Fel Magic", "Arrogance", "Honeymoon", "Break Up", "Overprotection", "The Unreliable One", "Detail Oriented", "Psychokinesis", "The Masterful Juggler", "Level 19 Cap"],
+      "OLD": []
+    };
+
+    // The section order as you described
+    const sectionOrder = [
+      "GENERAL", "MOD", "REVMOD", "WHY", "SUPERCHARGED CLONE", "SPECIAL", "OLD"
+    ];
+
+    // Fetch and display accepted records
+    function loadRecords() {
+      fetch(API + "/api/approved")
+        .then(r => r.json())
+        .then(data => {
+          renderSections(data);
+        })
+        .catch(() => {
+          document.getElementById("sections").innerHTML = `<div style="color:#c00;">Failed to load data</div>`;
+        });
+    }
+
+    // Group achievements by section
+    function renderSections(allAchievements) {
+      // Build a map from name to achievement for fast lookup
+      const nameToAchievement = {};
+      allAchievements.forEach(a => { nameToAchievement[a.name] = a; });
+
+      let html = '';
+      for (const section of sectionOrder) {
+        const names = sectionMap[section] || [];
+        // Collect data for this section
+        const achievements = names.map(name => nameToAchievement[name]).filter(Boolean);
+        if (achievements.length === 0) continue;
+        html += `<div class="section-title">${section}</div>`;
+        html += `<table><thead><tr><th>Name</th><th>User</th><th>Value</th></tr></thead><tbody>`;
+        for (const item of achievements) {
+          html += `
+            <tr>
+              <td>${escapeHtml(item.name)}</td>
+              <td>${escapeHtml(item.user)}</td>
+              <td>${escapeHtml(item.value) + " " + escapeHtml(item.unit)}</td>
+            </tr>
+          `;
+        }
+        html += `</tbody></table>`;
+      }
+      document.getElementById("sections").innerHTML = html || `<div style="color:#888;font-style:italic;">No records yet.</div>`;
+    }
+
+    // Helper for escaping HTML
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, function (m) {
+        return ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[m];
+      });
+    }
+
+    // Handle form submission
+    document.getElementById("recordForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+
+      fetch(API + "/api/submit", {
+        method: "POST",
+        body: formData
+      })
+      .then(r => r.json())
+      .then(response => {
+        document.getElementById("msg").textContent = "Submitted! Pending approval.";
+        document.getElementById("msg").style.display = "block";
+        form.reset();
+        setTimeout(() => {
+          document.getElementById("msg").style.display = "none";
+        }, 2500);
+      })
+      .catch(() => {
+        document.getElementById("msg").textContent = "Submission failed.";
+        document.getElementById("msg").style.display = "block";
+      });
+    });
+
+    // Initial load
+    loadRecords();
+    // Optionally reload every N seconds
+    // setInterval(loadRecords, 20000);
+  </script>
+</body>
+</html>
