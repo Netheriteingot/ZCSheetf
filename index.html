@@ -183,27 +183,6 @@
     </div>
 
     <script>
-        let backendUrl;
-        (async () => {
-            try {
-                // 1. Fetch the backend URL from GitHub
-                const urlResponse = await fetch('https://raw.githubusercontent.com/Netheriteingot/zcsheettemp/main/backend-url.txt');
-                if (!urlResponse.ok) throw new Error('Failed to fetch backend-url.txt');
-
-                const backendUrlRaw = await urlResponse.text();
-                backendUrl = backendUrlRaw.trim(); // Clean up whitespace or newlines
-
-                console.log('Backend URL:', backendUrl);
-            } catch (err) {
-                console.error('Error:', err);
-                document.body.innerHTML = `<p style="color:red;">Error loading backend: ${err.message}</p>`;
-            }
-        })();
-        // Set your backend API URL here
-        const API = backendUrl;
-
-        // Section map: Fill this out with your actual section data
-        // EXAMPLE:
         const sectionMap = {
             "GENERAL": ["Zenith Explorer+", "Clicker Speedrun", "Typer Speedrun", "Supercharged+", "Multitasker", "Effective", "Zenith Speedrun", "Zenith Speedrun+", "Zenith Speedrunner", "Divine Speedrunner", "Zenith Challenger", "Divine Challenger", "The Spike of All Time-", "The Spike of All Time", "The Spike of All Time+"],
             "MOD": ["The Emperor", "Temperence", "Wheel of Fortune", "The Tower", "Strength", "The Devil", "The Hermit", "The Magician", "The Lovers", "Grandmaster", "Starving Artist", "Trained Professionals", "Modern Classic", "Deadlocked", "Emperor's Decadence", "Divine Mastery", "Con Artist", "Swamp Water Lite", "Swamp Water"],
@@ -214,13 +193,54 @@
             "OLD": ["Steganography", "Trench Warfare", "Grand-Master!", "Endless Gluttony", "Uneasy Alliance", "Core Meltdown", "Brain Capacity", "Swamp Water Pro", "Ambrosia Moonshine", "Deadbeat", "Painful Relapse"]
         };
 
-        // The section order as you described
-        const sectionOrder = [
-            "GENERAL", "MOD", "REVMOD", "WHY", "SUPERCHARGED CLONE", "SPECIAL", "OLD"
-        ];
+        const sectionOrder = ["GENERAL", "MOD", "REVMOD", "WHY", "SUPERCHARGED CLONE", "SPECIAL", "OLD"];
 
-        // Fetch and display accepted records
-        function loadRecords() {
+        // Main async initializer
+        (async () => {
+            try {
+                const urlResponse = await fetch('https://raw.githubusercontent.com/Netheriteingot/zcsheettemp/main/backend-url.txt');
+                if (!urlResponse.ok) throw new Error('Failed to fetch backend-url.txt');
+                const backendUrl = (await urlResponse.text()).trim();
+
+                console.log('Backend URL:', backendUrl);
+
+                const API = backendUrl;
+
+                // Load initial records
+                loadRecords(API);
+
+                // Handle form submission
+                document.getElementById("recordForm").addEventListener("submit", function (e) {
+                    e.preventDefault();
+                    const form = e.target;
+                    const formData = new FormData(form);
+
+                    fetch(API + "/api/submit", {
+                        method: "POST",
+                        body: formData
+                    })
+                        .then(r => r.json())
+                        .then(response => {
+                            document.getElementById("msg").textContent = "Submitted! Pending approval.";
+                            document.getElementById("msg").style.display = "block";
+                            form.reset();
+                            setTimeout(() => {
+                                document.getElementById("msg").style.display = "none";
+                            }, 2500);
+                        })
+                        .catch(() => {
+                            document.getElementById("msg").textContent = "Submission failed.";
+                            document.getElementById("msg").style.display = "block";
+                        });
+                });
+
+            } catch (err) {
+                console.error('Error:', err);
+                document.body.innerHTML = `<p style="color:red;">Error loading backend: ${err.message}</p>`;
+            }
+        })();
+
+        function loadRecords(API) {
             fetch(API + "/api/approved")
                 .then(r => r.json())
                 .then(data => {
@@ -231,35 +251,35 @@
                 });
         }
 
-        // Group achievements by section
         function renderSections(allAchievements) {
-            // Build a map from name to achievement for fast lookup
             const nameToAchievement = {};
             allAchievements.forEach(a => { nameToAchievement[a.name] = a; });
 
             let html = '';
             for (const section of sectionOrder) {
                 const names = sectionMap[section] || [];
-                // Collect data for this section
                 const achievements = names.map(name => nameToAchievement[name]).filter(Boolean);
                 if (achievements.length === 0) continue;
+
                 html += `<div class="section-title">${section}</div>`;
                 html += `<table><thead><tr><th>Name</th><th>User</th><th>Value</th></tr></thead><tbody>`;
+
                 for (const item of achievements) {
                     html += `
-            <tr>
-              <td>${escapeHtml(item.name)}</td>
-              <td>${escapeHtml(item.user)}</td>
-              <td>${escapeHtml(item.value) + " " + escapeHtml(item.unit)}</td>
-            </tr>
-          `;
+                        <tr>
+                            <td>${escapeHtml(item.name)}</td>
+                            <td>${escapeHtml(item.user)}</td>
+                            <td>${escapeHtml(item.value)} ${escapeHtml(item.unit)}</td>
+                        </tr>
+                    `;
                 }
+
                 html += `</tbody></table>`;
             }
+
             document.getElementById("sections").innerHTML = html || `<div style="color:#888;font-style:italic;">No records yet.</div>`;
         }
 
-        // Helper for escaping HTML
         function escapeHtml(str) {
             return String(str).replace(/[&<>"']/g, function (m) {
                 return ({
@@ -267,37 +287,8 @@
                 })[m];
             });
         }
-
-        // Handle form submission
-        document.getElementById("recordForm").addEventListener("submit", function (e) {
-            e.preventDefault();
-            const form = e.target;
-            const formData = new FormData(form);
-
-            fetch(API + "/api/submit", {
-                method: "POST",
-                body: formData
-            })
-                .then(r => r.json())
-                .then(response => {
-                    document.getElementById("msg").textContent = "Submitted! Pending approval.";
-                    document.getElementById("msg").style.display = "block";
-                    form.reset();
-                    setTimeout(() => {
-                        document.getElementById("msg").style.display = "none";
-                    }, 2500);
-                })
-                .catch(() => {
-                    document.getElementById("msg").textContent = "Submission failed.";
-                    document.getElementById("msg").style.display = "block";
-                });
-        });
-
-        // Initial load
-        loadRecords();
-        // Optionally reload every N seconds
-        // setInterval(loadRecords, 20000);
     </script>
+
 </body>
 
 </html>
