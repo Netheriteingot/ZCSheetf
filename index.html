@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-
+<!-- THIS IS MANUALLY UPDATED! -->
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -196,6 +196,7 @@
         const sectionOrder = ["GENERAL", "MOD", "REVMOD", "WHY", "SPECIAL", "SUPERCHARGED CLONE", "OLD"];
 
         // Main async initializer
+        // Backend site broken, switched backend to raw file from backend repo
         (async () => {
             try {
                 const urlResponse = await fetch('https://raw.githubusercontent.com/Netheriteingot/zcsheettemp/main/backend-url.txt');
@@ -204,10 +205,12 @@
 
                 console.log('Backend URL:', backendUrl);
 
+                // Kept because I don't want to deal with bugfixing the form submission underneath
                 const API = backendUrl;
 
                 // Load initial records
-                loadRecords(API);
+                // loadRecords(API);
+                loadRecords();
 
                 // Handle form submission
                 document.getElementById("recordForm").addEventListener("submit", function (e) {
@@ -240,14 +243,16 @@
             }
         })();
 
-        function loadRecords(API) {
-            fetch(API + "/api/approved")
+        // function loadRecords(API) {
+        function loadRecords() {
+            // fetch(API + "/api/approved")
+            fetch("https://raw.githubusercontent.com/Netheriteingot/ZCSheet/refs/heads/main/data/approved.json")
                 .then(r => r.json())
                 .then(data => {
                     renderSections(data);
                 })
                 .catch(() => {
-                    document.getElementById("sections").innerHTML = `<div style="color:#c00;">Failed to load data</div>`;
+                    document.getElementById("sections").innerHTML = `<div style="color:#c00;">Failed to load data.</div>`;
                 });
         }
 
@@ -292,4 +297,5 @@
 </body>
 
 </html>
+
 
